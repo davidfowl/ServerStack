@@ -8,13 +8,13 @@ namespace ServerStack
 {
     public class TlsMiddleware
     {
-        private X509Certificate2 cert;
-        private Func<IFeatureCollection, Task> next;
+        private readonly X509Certificate2 _cert;
+        private readonly Func<IFeatureCollection, Task> _next;
 
         public TlsMiddleware(Func<IFeatureCollection, Task> next, X509Certificate2 cert)
         {
-            this.next = next;
-            this.cert = cert;
+            this._next = next;
+            this._cert = cert;
         }
 
         public async Task Invoke(IFeatureCollection context)
@@ -22,11 +22,11 @@ namespace ServerStack
             var connection = context.Get<IConnectionFeature>();
             var sslStream = new SslStream(connection.Body);
 
-            await sslStream.AuthenticateAsServerAsync(cert);
+            await sslStream.AuthenticateAsServerAsync(_cert);
 
             connection.Body = sslStream;
 
-            await next(context);
+            await _next(context);
         }
     }
 

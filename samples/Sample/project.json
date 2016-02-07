@@ -1,0 +1,24 @@
+﻿{
+  "version": "1.0.0-*",
+  "description": "Sample Console Application",
+  "authors": [ "dfowler" ],
+  "tags": [ "" ],
+  "projectUrl": "",
+  "licenseUrl": "",
+
+  "compilationOptions": {
+    "emitEntryPoint": true
+  },
+
+  "dependencies": {
+    "ServerStack": { "target": "project" }
+  },
+
+  "commands": {
+    "Sample": "Sample"
+  },
+
+  "frameworks": {
+    "dnx451": { }
+  }
+}

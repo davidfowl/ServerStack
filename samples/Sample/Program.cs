@@ -12,8 +12,9 @@ using ServerStack.Middleware;
 using ServerStack.Servers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using ServerStack;
 
-namespace ServerStack
+namespace Sample
 {
     public class Program
     {
