@@ -3,28 +3,28 @@ using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using ServerStack.Features;
+using ServerStack.Protocols.Tcp;
 
 namespace ServerStack
 {
     public class TlsMiddleware
     {
         private readonly X509Certificate2 _cert;
-        private readonly Func<IFeatureCollection, Task> _next;
+        private readonly Func<TcpContext, Task> _next;
 
-        public TlsMiddleware(Func<IFeatureCollection, Task> next, X509Certificate2 cert)
+        public TlsMiddleware(Func<TcpContext, Task> next, X509Certificate2 cert)
         {
-            this._next = next;
-            this._cert = cert;
+            _next = next;
+            _cert = cert;
         }
 
-        public async Task Invoke(IFeatureCollection context)
+        public async Task Invoke(TcpContext context)
         {
-            var connection = context.Get<IConnectionFeature>();
-            var sslStream = new SslStream(connection.Body);
+            var sslStream = new SslStream(context.Body);
 
             await sslStream.AuthenticateAsServerAsync(_cert);
 
-            connection.Body = sslStream;
+            context.Body = sslStream;
 
             await _next(context);
         }
@@ -32,7 +32,7 @@ namespace ServerStack
 
     public static class TlsMiddlewareExtensions
     {
-        public static IApplicationBuilder<IFeatureCollection> UseTls(this IApplicationBuilder<IFeatureCollection> app, X509Certificate2 cert)
+        public static IApplicationBuilder<TcpContext> UseTls(this IApplicationBuilder<TcpContext> app, X509Certificate2 cert)
         {
             return app.Use(next => ctx => new TlsMiddleware(next, cert).Invoke(ctx));
         }

@@ -1,18 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Net.Sockets;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
-using System.Threading.Tasks;
-using ServerStack.Features;
-using ServerStack.Middleware;
-using ServerStack.Servers;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using ServerStack;
+using ServerStack.Middleware;
+using ServerStack.Protocols.Tcp;
+using ServerStack.Servers;
 
 namespace Sample
 {
@@ -23,16 +15,16 @@ namespace Sample
             var host = new HostBuilder()
                     .UseServer<TcpServerFactory>()
                     .UseSetting("port", "4000")
-                    .UseStartup<Startup>()
+                    .UseStartup<TcpStartup>()
                     .Build();
 
             host.Run();
         }
     }
 
-    public class Startup
+    public class TcpStartup
     {
-        public void Configure(IApplicationBuilder<IFeatureCollection> app)
+        public void Configure(ITcpApplicationBuilder app)
         {
             app.UseExceptionHandler(ex =>
             {
@@ -44,7 +36,7 @@ namespace Sample
             app.Run(async ctx =>
             {
                 var bytes = Encoding.UTF8.GetBytes("Hello World");
-                await ctx.Get<IConnectionFeature>().Body.WriteAsync(bytes, 0, bytes.Length);
+                await ctx.Body.WriteAsync(bytes, 0, bytes.Length);
             });
         }
     }
