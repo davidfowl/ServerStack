@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 
@@ -10,12 +11,19 @@ namespace ServerStack.Servers
     {
         public IServer CreateServer(IConfiguration configuration)
         {
-            int port;
-            if (!Int32.TryParse(configuration["port"], out port))
+            var ip = new IPEndPoint(IPAddress.Loopback, 5000);
+            var address = configuration["server.address"];
+            if (!string.IsNullOrEmpty(address))
             {
-                port = 3045;
+                var uri = new Uri(address);
+                if (!string.Equals(uri.Scheme, "tcp", StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new InvalidOperationException($"Invalid scheme {uri.Scheme}");
+                }
+
+                ip = new IPEndPoint(IPAddress.Parse(uri.Host), uri.Port);
             }
-            return new TcpServer(port);
+            return new TcpServer(ip);
         }
     }
 }

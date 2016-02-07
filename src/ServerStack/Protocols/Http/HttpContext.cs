@@ -7,5 +7,11 @@ namespace ServerStack.Protocols.Http
 {
     public class HttpContext
     {
+        private readonly IFeatureCollection _features;
+
+        public HttpContext(IFeatureCollection features)
+        {
+            _features = features;
+        }
     }
 }

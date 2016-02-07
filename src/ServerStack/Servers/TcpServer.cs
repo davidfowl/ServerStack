@@ -14,9 +14,9 @@ namespace ServerStack.Servers
 
         private readonly TcpListener _listener;
 
-        public TcpServer(int port)
+        public TcpServer(IPEndPoint endPoint)
         {
-            _listener = new TcpListener(new IPEndPoint(IPAddress.Loopback, port));
+            _listener = new TcpListener(endPoint);
         }
 
         public void Dispose()
@@ -38,7 +38,7 @@ namespace ServerStack.Servers
                     Body = client.GetStream()
                 });
 
-                var context = application.CreateContext(null);
+                var context = application.CreateContext(fc);
 
                 try
                 {
