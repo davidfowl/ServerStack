@@ -9,21 +9,6 @@ using ServerStack.Protocols.Tcp;
 
 namespace Sample.Middleware
 {
-    public class JsonRPCMiddleware
-    {
-        private readonly Func<TcpContext, Task> _next;
-
-        public JsonRPCMiddleware(Func<TcpContext, Task> next)
-        {
-            _next = next;
-        }
-
-        public Task Invoke(TcpContext context)
-        {
-            return _next(context);
-        }
-    }
-
     public static class JsonRPCMiddlewareExtensions
     {
         public static IApplicationBuilder<TcpContext> UseJsonRPC<T>(this IApplicationBuilder<TcpContext> app) where T : class
