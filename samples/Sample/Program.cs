@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Sample.Middleware;
 using ServerStack;
 using ServerStack.Middleware;
 using ServerStack.Protocols.Tcp;
@@ -24,8 +27,15 @@ namespace Sample
 
     public class TcpStartup
     {
-        public void Configure(IApplicationBuilder<TcpContext> app)
+        public void ConfigureServices(IServiceCollection services)
         {
+            services.AddSingleton<MyType>();
+        }
+
+        public void Configure(IApplicationBuilder<TcpContext> app, ILoggerFactory loggerFactory)
+        {
+            loggerFactory.AddConsole(LogLevel.Debug);
+
             app.UseExceptionHandler(ex =>
             {
                 Console.WriteLine("Exception was thrown!: " + ex);
@@ -33,11 +43,23 @@ namespace Sample
 
             // app.UseTls(new X509Certificate2("dotnetty.com.pfx", "password"));
 
-            app.Run(async ctx =>
-            {
-                var bytes = Encoding.UTF8.GetBytes("Hello World");
-                await ctx.Body.WriteAsync(bytes, 0, bytes.Length);
-            });
+            app.UseJsonRPC<MyType>();
+        }
+    }
+
+    public class MyType
+    {
+        private readonly ILogger<MyType> _logger;
+        public MyType(ILogger<MyType> logger)
+        {
+            _logger = logger;
+        }
+
+        public int Increment(int value)
+        {
+            _logger.LogInformation("Received " + value);
+
+            return value + 1;
         }
     }
 }

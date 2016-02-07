@@ -11,7 +11,9 @@
   },
 
   "dependencies": {
-    "ServerStack": { "target": "project" }
+    "ServerStack": { "target": "project" },
+    "Microsoft.Extensions.Logging.Console": "1.0.0-rc1-final",
+    "Newtonsoft.Json": "8.0.2"
   },
 
   "commands": {

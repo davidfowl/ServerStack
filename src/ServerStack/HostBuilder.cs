@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using ServerStack.Protocols.Http;
 using ServerStack.Protocols.Tcp;
 
@@ -22,6 +23,7 @@ namespace ServerStack
         public IHost<TContext> Build()
         {
             var services = new ServiceCollection();
+            services.AddInstance<ILoggerFactory>(new LoggerFactory());
             services.AddLogging();
             services.AddOptions();
             services.AddSingleton<IApplicationLifetime, ApplicationLifetime>();

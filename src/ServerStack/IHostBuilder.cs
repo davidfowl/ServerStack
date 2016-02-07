@@ -40,7 +40,6 @@ namespace ServerStack
 
         IHostBuilder<TContext> UseStartup<TStartup>();
 
-
         /// <summary>
         /// Specify the delegate that is used to configure the services of the web application.
         /// </summary>
