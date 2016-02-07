@@ -4,13 +4,13 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace ServerStack
 {
-    public static class HostingExtensions
+    public static class ServerHostingExtensions
     {
         /// <summary>
         /// Runs a web application and block the calling thread until host shutdown.
         /// </summary>
         /// <param name="host"></param>
-        public static void Run<TContext>(this IHost<TContext> host)
+        public static void Run<TContext>(this IServerHost<TContext> host)
         {
             using (var cts = new CancellationTokenSource())
             {
@@ -31,12 +31,12 @@ namespace ServerStack
         /// </summary>
         /// <param name="host"></param>
         /// <param name="token">The token to trigger shutdown</param>
-        public static void Run<TContext>(this IHost<TContext> host, CancellationToken token)
+        public static void Run<TContext>(this IServerHost<TContext> host, CancellationToken token)
         {
             host.Run(token, shutdownMessage: null);
         }
 
-        private static void Run<TContext>(this IHost<TContext> host, CancellationToken token, string shutdownMessage)
+        private static void Run<TContext>(this IServerHost<TContext> host, CancellationToken token, string shutdownMessage)
         {
             using (host)
             {
@@ -69,7 +69,7 @@ namespace ServerStack
         }
     }
 
-    public interface IHost<TContext> : IDisposable
+    public interface IServerHost<TContext> : IDisposable
     {
         IFeatureCollection ServerFeatures { get; }
 

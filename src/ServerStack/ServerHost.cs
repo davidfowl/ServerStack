@@ -5,13 +5,13 @@ using System.Threading.Tasks;
 
 namespace ServerStack
 {
-    public class Host<TContext> : IHost<TContext>
+    public class ServerHost<TContext> : IServerHost<TContext>
     {
         private readonly Func<TContext, Task> _pipeline;
         private readonly IServer _server;
         private readonly IContextFactory<TContext> _contextFactory;
 
-        public Host(IServer server, IServiceProvider services, IContextFactory<TContext> contextFactory, Func<TContext, Task> pipeline)
+        public ServerHost(IServer server, IServiceProvider services, IContextFactory<TContext> contextFactory, Func<TContext, Task> pipeline)
         {
             _server = server;
             ServerFeatures = server.Features;

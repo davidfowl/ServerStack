@@ -12,7 +12,7 @@ using ServerStack.Protocols.Tcp;
 
 namespace ServerStack
 {
-    public class HostBuilder<TContext> : IHostBuilder<TContext>
+    public class ServerHostBuilder<TContext> : IServerHostBuilder<TContext>
     {
         private Action<IServiceCollection> _configureServices;
         private IConfiguration _config = new ConfigurationBuilder().AddInMemoryCollection().Build();
@@ -20,7 +20,7 @@ namespace ServerStack
         private Type _startupType;
         private Type _serverFactoryType;
 
-        public IHost<TContext> Build()
+        public IServerHost<TContext> Build()
         {
             var services = new ServiceCollection();
             services.AddInstance<ILoggerFactory>(new LoggerFactory());
@@ -74,15 +74,15 @@ namespace ServerStack
             var contextFactory = applicationServices.GetRequiredService<IContextFactory<TContext>>();
             var server = serverFactory.CreateServer(_config);
 
-            return new Host<TContext>(server, applicationServices, contextFactory, pipeline);
+            return new ServerHost<TContext>(server, applicationServices, contextFactory, pipeline);
         }
         
-        public IHostBuilder<TContext> Configure(Action<IApplicationBuilder<TContext>> configureApplication)
+        public IServerHostBuilder<TContext> Configure(Action<IApplicationBuilder<TContext>> configureApplication)
         {
             throw new NotImplementedException();
         }
 
-        public IHostBuilder<TContext> ConfigureServices(Action<IServiceCollection> configureServices)
+        public IServerHostBuilder<TContext> ConfigureServices(Action<IServiceCollection> configureServices)
         {
             _configureServices = configureServices;
             return this;
@@ -93,29 +93,29 @@ namespace ServerStack
             return _config[key];
         }
 
-        public IHostBuilder<TContext> UseServer<TServerFactory>()
+        public IServerHostBuilder<TContext> UseServer<TServerFactory>()
         {
             _serverFactoryType = typeof(TServerFactory);
             return this;
         }
 
-        public IHostBuilder<TContext> UseServer(IServerFactory factory)
+        public IServerHostBuilder<TContext> UseServer(IServerFactory factory)
         {
             throw new NotImplementedException();
         }
 
-        public IHostBuilder<TContext> UseSetting(string key, string value)
+        public IServerHostBuilder<TContext> UseSetting(string key, string value)
         {
             _config[key] = value;
             return this;
         }
 
-        public IHostBuilder<TContext> UseStartup(Type startupType)
+        public IServerHostBuilder<TContext> UseStartup(Type startupType)
         {
             _startupType = startupType;
             return this;
         }
-        public IHostBuilder<TContext> UseStartup<TStartup>()
+        public IServerHostBuilder<TContext> UseStartup<TStartup>()
         {
             return UseStartup(typeof(TStartup));
         }

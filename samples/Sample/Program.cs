@@ -15,7 +15,7 @@ namespace Sample
     {
         public static void Main()
         {
-            var host = new HostBuilder<TcpContext>()
+            var host = new ServerHostBuilder<TcpContext>()
                     .UseServer<TcpServerFactory>()
                     .UseSetting("server.address", "tcp://127.0.0.1:22")
                     .UseStartup<TcpStartup>()
