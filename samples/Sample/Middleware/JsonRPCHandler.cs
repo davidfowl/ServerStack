@@ -6,58 +6,61 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Streamer;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Sample.Middleware
 {
-    public class ServerChannel : IDisposable
+    public class JsonRPCHandler
     {
-        private readonly Stream _stream;
         private readonly JsonSerializer _serializer;
-        private readonly Dictionary<string, Func<Request, Response>> _callbacks = new Dictionary<string, Func<Request, Response>>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, Func<JObject, JObject>> _callbacks = new Dictionary<string, Func<JObject, JObject>>(StringComparer.OrdinalIgnoreCase);
         private readonly IServiceProvider _serviceProvider;
+        private readonly ILogger<JsonRPCHandler> _logger;
 
         private bool _isBound;
 
-        public ServerChannel(Stream stream, JsonSerializerSettings settings, IServiceProvider serviceProvider)
+        public JsonRPCHandler(JsonSerializerSettings settings, IServiceProvider serviceProvider)
         {
-            _stream = stream;
             _serializer = JsonSerializer.Create(settings);
+            _logger = serviceProvider.GetRequiredService<ILogger<JsonRPCHandler>>();
             _serviceProvider = serviceProvider;
         }
 
-        public async Task StartAsync()
+        public async Task StartAsync(Stream stream)
         {
+
             try
             {
                 while (true)
                 {
-                    var reader = new JsonTextReader(new StreamReader(_stream));
+                    var reader = new JsonTextReader(new StreamReader(stream));
 
+                    var request = JObject.Load(reader);
 
-                    var request = _serializer.Deserialize<Request>(reader);
+                    if (_logger.IsEnabled(LogLevel.Verbose))
+                    {
+                        _logger.LogVerbose("Received JSON RPC request: {request}", request);
+                    }
 
-                    Response response = null;
+                    JObject response = null;
 
-                    Func<Request, Response> callback;
-                    if (_callbacks.TryGetValue(request.Method, out callback))
+                    Func<JObject, JObject> callback;
+                    if (_callbacks.TryGetValue(request.Value<string>("method"), out callback))
                     {
                         response = callback(request);
                     }
                     else
                     {
                         // If there's no method then return a failed response for this request
-                        response = new Response
-                        {
-                            Id = request.Id,
-                            Error = string.Format("Unknown method '{0}'", request.Method)
-                        };
+                        response = new JObject();
+                        response["id"] = request["id"];
+                        response["error"] = string.Format("Unknown method '{0}'", request.Value<string>("method"));
                     }
 
-                    await Write(response);
+                    await Write(stream, response);
                 }
             }
             catch (Exception ex)
@@ -79,41 +82,48 @@ namespace Sample.Middleware
 
             foreach (var m in typeof(T).GetTypeInfo().DeclaredMethods.Where(m => m.IsPublic))
             {
-                methods.Add(m.Name);
+                var methodName = typeof(T).FullName + "." + m.Name;
+
+                methods.Add(methodName);
 
                 var parameters = m.GetParameters();
 
-                if (_callbacks.ContainsKey(m.Name))
+                if (_callbacks.ContainsKey(methodName))
                 {
                     throw new NotSupportedException(String.Format("Duplicate definitions of {0}. Overloading is not supported.", m.Name));
                 }
 
-                _callbacks[m.Name] = request =>
+                if (_logger.IsEnabled(LogLevel.Verbose))
                 {
-                    var response = new Response();
-                    response.Id = request.Id;
+                    _logger.LogVerbose("RPC method '{methodName}' is bound", methodName);
+                }
+
+                _callbacks[methodName] = request =>
+                {
+                    var response = new JObject();
+                    response["id"] = request["id"];
 
                     T value = _serviceProvider.GetService<T>() ?? Activator.CreateInstance<T>();
 
                     try
                     {
-                        var args = request.Args.Zip(parameters, (a, p) => a.ToObject(p.ParameterType))
-                                               .ToArray();
+                        var args = request.Value<JArray>("params").Zip(parameters, (a, p) => a.ToObject(p.ParameterType))
+                                                                  .ToArray();
 
                         var result = m.Invoke(value, args);
 
                         if (result != null)
                         {
-                            response.Result = JToken.FromObject(result);
+                            response["result"] = JToken.FromObject(result);
                         }
                     }
                     catch (TargetInvocationException ex)
                     {
-                        response.Error = ex.InnerException.Message;
+                        response["error"] = ex.InnerException.Message;
                     }
                     catch (Exception ex)
                     {
-                        response.Error = ex.Message;
+                        response["error"] = ex.Message;
                     }
 
                     return response;
@@ -132,18 +142,16 @@ namespace Sample.Middleware
             });
         }
 
-        private Task Write(object value)
+        private Task Write(Stream stream, JObject data)
         {
-            var data = JsonConvert.SerializeObject(value);
+            if (_logger.IsEnabled(LogLevel.Verbose))
+            {
+                _logger.LogVerbose("Sending JSON RPC response: {data}", data);
+            }
 
-            var bytes = Encoding.UTF8.GetBytes(data);
+            var bytes = Encoding.UTF8.GetBytes(data.ToString());
 
-            return _stream.WriteAsync(bytes, 0, bytes.Length);
-        }
-
-        public void Dispose()
-        {
-            _stream.Dispose();
+            return stream.WriteAsync(bytes, 0, bytes.Length);
         }
 
         private class DisposableAction : IDisposable

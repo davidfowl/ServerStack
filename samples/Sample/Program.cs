@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Sample.Middleware;
@@ -16,8 +14,8 @@ namespace Sample
         public static void Main()
         {
             var host = new ServerHostBuilder<TcpContext>()
+                    .UseSetting("server.address", "tcp://127.0.0.1:1335")
                     .UseServer<TcpServerFactory>()
-                    .UseSetting("server.address", "tcp://127.0.0.1:22")
                     .UseStartup<TcpStartup>()
                     .Build();
 
@@ -29,7 +27,7 @@ namespace Sample
     {
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddSingleton<MyType>();
+            services.AddSingleton<EchoHandler>();
         }
 
         public void Configure(IApplicationBuilder<TcpContext> app, ILoggerFactory loggerFactory)
@@ -43,23 +41,15 @@ namespace Sample
 
             // app.UseTls(new X509Certificate2("dotnetty.com.pfx", "password"));
 
-            app.UseJsonRPC<MyType>();
+            app.UseJsonRPC<EchoHandler>();
         }
     }
 
-    public class MyType
+    public class EchoHandler
     {
-        private readonly ILogger<MyType> _logger;
-        public MyType(ILogger<MyType> logger)
+        public string Echo(string value)
         {
-            _logger = logger;
-        }
-
-        public int Increment(int value)
-        {
-            _logger.LogInformation("Received " + value);
-
-            return value + 1;
+            return value;
         }
     }
 }
