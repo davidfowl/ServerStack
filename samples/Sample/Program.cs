@@ -1,7 +1,7 @@
 ﻿using System;
+using JsonRPC;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Sample.Middleware;
 using ServerStack;
 using ServerStack.Middleware;
 using ServerStack.Protocols.Tcp;
@@ -27,29 +27,16 @@ namespace Sample
     {
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddSingleton<EchoHandler>();
+            services.AddJsonRPC();
         }
 
         public void Configure(IApplicationBuilder<TcpContext> app, ILoggerFactory loggerFactory)
         {
             loggerFactory.AddConsole(LogLevel.Debug);
 
-            app.UseExceptionHandler(ex =>
-            {
-                Console.WriteLine("Exception was thrown!: " + ex);
-            });
+            app.UseLogging();
 
-            // app.UseTls(new X509Certificate2("dotnetty.com.pfx", "password"));
-
-            app.UseJsonRPC<EchoHandler>();
-        }
-    }
-
-    public class EchoHandler
-    {
-        public string Echo(string value)
-        {
-            return value;
+            app.UseJsonRPC();
         }
     }
 }

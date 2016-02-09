@@ -4,14 +4,13 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace Sample.Middleware
+namespace JsonRPC
 {
     public class JsonRPCHandler
     {
@@ -69,7 +68,7 @@ namespace Sample.Middleware
             }
         }
 
-        public IDisposable Bind<T>() where T : class
+        public void Bind(Type type)
         {
             if (_isBound)
             {
@@ -80,9 +79,9 @@ namespace Sample.Middleware
 
             var methods = new List<string>();
 
-            foreach (var m in typeof(T).GetTypeInfo().DeclaredMethods.Where(m => m.IsPublic))
+            foreach (var m in type.GetTypeInfo().DeclaredMethods.Where(m => m.IsPublic))
             {
-                var methodName = typeof(T).FullName + "." + m.Name;
+                var methodName = m.GetCustomAttribute<JsonRPCMethodAttribute>()?.MethodName ?? type.FullName + "." + m.Name;
 
                 methods.Add(methodName);
 
@@ -103,43 +102,38 @@ namespace Sample.Middleware
                     var response = new JObject();
                     response["id"] = request["id"];
 
-                    T value = _serviceProvider.GetService<T>() ?? Activator.CreateInstance<T>();
+                    var scopeFactory = _serviceProvider.GetRequiredService<IServiceScopeFactory>();
 
-                    try
+                    // Scope per call so that deps injected get disposed
+                    using (var scope = scopeFactory.CreateScope())
                     {
-                        var args = request.Value<JArray>("params").Zip(parameters, (a, p) => a.ToObject(p.ParameterType))
-                                                                  .ToArray();
+                        object value = scope.ServiceProvider.GetService(type);
 
-                        var result = m.Invoke(value, args);
-
-                        if (result != null)
+                        try
                         {
-                            response["result"] = JToken.FromObject(result);
+                            var args = request.Value<JArray>("params").Zip(parameters, (a, p) => a.ToObject(p.ParameterType))
+                                                                      .ToArray();
+
+                            var result = m.Invoke(value, args);
+
+                            if (result != null)
+                            {
+                                response["result"] = JToken.FromObject(result);
+                            }
                         }
-                    }
-                    catch (TargetInvocationException ex)
-                    {
-                        response["error"] = ex.InnerException.Message;
-                    }
-                    catch (Exception ex)
-                    {
-                        response["error"] = ex.Message;
+                        catch (TargetInvocationException ex)
+                        {
+                            response["error"] = ex.InnerException.Message;
+                        }
+                        catch (Exception ex)
+                        {
+                            response["error"] = ex.Message;
+                        }
                     }
 
                     return response;
                 };
-            }
-
-            return new DisposableAction(() =>
-            {
-                foreach (var m in methods)
-                {
-                    lock (_callbacks)
-                    {
-                        _callbacks.Remove(m);
-                    }
-                }
-            });
+            };
         }
 
         private Task Write(Stream stream, JObject data)
@@ -152,21 +146,6 @@ namespace Sample.Middleware
             var bytes = Encoding.UTF8.GetBytes(data.ToString());
 
             return stream.WriteAsync(bytes, 0, bytes.Length);
-        }
-
-        private class DisposableAction : IDisposable
-        {
-            private Action _action;
-
-            public DisposableAction(Action action)
-            {
-                _action = action;
-            }
-
-            public void Dispose()
-            {
-                Interlocked.Exchange(ref _action, () => { }).Invoke();
-            }
         }
     }
 }

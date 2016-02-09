@@ -1,0 +1,18 @@
+﻿{
+  "version": "1.0.0-*",
+  "description": "JsonRPC Class Library",
+  "authors": [ "dfowler" ],
+  "tags": [ "" ],
+  "projectUrl": "",
+  "licenseUrl": "",
+
+  "dependencies": {
+    "ServerStack": { "target": "project" },
+    "Microsoft.Extensions.Logging.Console": "1.0.0-rc1-final",
+    "Newtonsoft.Json": "8.0.2"
+  },
+
+  "frameworks": {
+    "net451": { }
+  }
+}
