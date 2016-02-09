@@ -47,7 +47,8 @@ namespace ServerStack.Middleware
                         break;
                     }
 
-                    await _frameHandler.OnFrame(new StreamContext(context.Body, _encoder), frame);
+                    var value = await _frameHandler.OnFrame(frame);
+                    await _encoder.WriteAsync(context.Body, value);
                 }
                 catch (Exception ex)
                 {

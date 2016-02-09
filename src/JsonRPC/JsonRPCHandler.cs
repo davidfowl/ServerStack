@@ -34,7 +34,7 @@ namespace JsonRPC
             }
         }
 
-        public Task OnFrame(IStreamContext context, JObject request)
+        public Task<object> OnFrame(JObject request)
         {
             if (_logger.IsEnabled(LogLevel.Verbose))
             {
@@ -56,7 +56,7 @@ namespace JsonRPC
             }
 
             _logger.LogVerbose("Sending JSON RPC response: {data}", response);
-            return context.WriteAsync(response);
+            return Task.FromResult<object>(response);
         }
 
         private void Bind(Type type)
