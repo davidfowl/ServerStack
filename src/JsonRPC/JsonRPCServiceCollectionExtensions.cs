@@ -5,6 +5,8 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.PlatformAbstractions;
+using Newtonsoft.Json.Linq;
+using ServerStack.Protocols;
 
 namespace JsonRPC
 {
@@ -29,6 +31,10 @@ namespace JsonRPC
                     }
                 }
             }
+
+            services.AddSingleton<IStreamDecoder<JObject>, JsonDecoder>();
+            services.AddSingleton<IStreamEncoder<JObject>, JsonEncoder>();
+            services.AddSingleton<IFrameHandler<JObject>, JsonRPCHandler>();
             return services;
         }
     }

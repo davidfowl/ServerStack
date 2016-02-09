@@ -1,9 +1,18 @@
 ﻿using System;
+using System.Collections.Concurrent;
+using System.IO;
+using System.Linq.Expressions;
+using System.Reflection;
+using System.Text;
+using System.Threading.Tasks;
 using JsonRPC;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using ServerStack;
 using ServerStack.Middleware;
+using ServerStack.Protocols;
 using ServerStack.Protocols.Tcp;
 using ServerStack.Servers;
 
@@ -27,6 +36,8 @@ namespace Sample
     {
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddSingleton<IStreamEncoder, StreamEncoder>();
+
             services.AddJsonRPC();
         }
 
@@ -36,7 +47,7 @@ namespace Sample
 
             app.UseLogging();
 
-            app.UseJsonRPC();
+            app.UseFraming<JObject>();
         }
     }
 }

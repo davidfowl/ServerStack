@@ -9,66 +9,57 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using ServerStack.Protocols;
 
 namespace JsonRPC
 {
-    public class JsonRPCHandler
+    public class JsonRPCHandler : IFrameHandler<JObject>
     {
-        private readonly JsonSerializer _serializer;
         private readonly Dictionary<string, Func<JObject, JObject>> _callbacks = new Dictionary<string, Func<JObject, JObject>>(StringComparer.OrdinalIgnoreCase);
         private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<JsonRPCHandler> _logger;
 
         private bool _isBound;
 
-        public JsonRPCHandler(JsonSerializerSettings settings, IServiceProvider serviceProvider)
+        public JsonRPCHandler(ILogger<JsonRPCHandler> logger, 
+                              IEnumerable<RpcEndpoint> endpoints, 
+                              IServiceProvider serviceProvider)
         {
-            _serializer = JsonSerializer.Create(settings);
-            _logger = serviceProvider.GetRequiredService<ILogger<JsonRPCHandler>>();
+            _logger = logger;
             _serviceProvider = serviceProvider;
+
+            foreach (var endpoint in endpoints)
+            {
+                Bind(endpoint.GetType());
+            }
         }
 
-        public async Task StartAsync(Stream stream)
+        public Task OnFrame(IStreamContext context, JObject request)
         {
-
-            try
+            if (_logger.IsEnabled(LogLevel.Verbose))
             {
-                while (true)
-                {
-                    var reader = new JsonTextReader(new StreamReader(stream));
-
-                    var request = JObject.Load(reader);
-
-                    if (_logger.IsEnabled(LogLevel.Verbose))
-                    {
-                        _logger.LogVerbose("Received JSON RPC request: {request}", request);
-                    }
-
-                    JObject response = null;
-
-                    Func<JObject, JObject> callback;
-                    if (_callbacks.TryGetValue(request.Value<string>("method"), out callback))
-                    {
-                        response = callback(request);
-                    }
-                    else
-                    {
-                        // If there's no method then return a failed response for this request
-                        response = new JObject();
-                        response["id"] = request["id"];
-                        response["error"] = string.Format("Unknown method '{0}'", request.Value<string>("method"));
-                    }
-
-                    await Write(stream, response);
-                }
+                _logger.LogVerbose("Received JSON RPC request: {request}", request);
             }
-            catch (Exception ex)
+            JObject response = null;
+
+            Func<JObject, JObject> callback;
+            if (_callbacks.TryGetValue(request.Value<string>("method"), out callback))
             {
-                Console.WriteLine(ex.Message);
+                response = callback(request);
             }
+            else
+            {
+                // If there's no method then return a failed response for this request
+                response = new JObject();
+                response["id"] = request["id"];
+                response["error"] = string.Format("Unknown method '{0}'", request.Value<string>("method"));
+            }
+
+            _logger.LogVerbose("Sending JSON RPC response: {data}", response);
+            return context.WriteAsync(response);
         }
 
-        public void Bind(Type type)
+        private void Bind(Type type)
         {
             if (_isBound)
             {
@@ -136,16 +127,5 @@ namespace JsonRPC
             };
         }
 
-        private Task Write(Stream stream, JObject data)
-        {
-            if (_logger.IsEnabled(LogLevel.Verbose))
-            {
-                _logger.LogVerbose("Sending JSON RPC response: {data}", data);
-            }
-
-            var bytes = Encoding.UTF8.GetBytes(data.ToString());
-
-            return stream.WriteAsync(bytes, 0, bytes.Length);
-        }
     }
 }
