@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -12,12 +10,12 @@ namespace ServerStack.Serialization
 {
     public class FrameOutput : IFrameOutput
     {
-        private readonly IServiceProvider _sp;
-        private readonly ConcurrentDictionary<Type, Func<object, Stream, object, Task>> _cache = new ConcurrentDictionary<Type, Func<object, Stream, object, Task>>();
+        private readonly IServiceProvider _serviceProvider;
+        private readonly ConcurrentDictionary<Type, CacheEntry> _cache = new ConcurrentDictionary<Type, CacheEntry>();
 
-        public FrameOutput(IServiceProvider sp)
+        public FrameOutput(IServiceProvider serviceProvider)
         {
-            _sp = sp;
+            _serviceProvider = serviceProvider;
         }
 
         public Task WriteAsync(Stream stream, object value)
@@ -28,34 +26,43 @@ namespace ServerStack.Serialization
             }
 
             Type type = value.GetType();
+            var entry = _cache.GetOrAdd(type, t => CreateCacheEntry(t));
+
+            return entry.Encode(entry.Encoder, stream, value);
+        }
+
+        private CacheEntry CreateCacheEntry(Type type)
+        {
             var encoderType = typeof(IStreamEncoder<>).MakeGenericType(type);
 
-            var func = _cache.GetOrAdd(type, key =>
+            // Func<object, Stream, object, Task> callback = (encoder, body, value) =>
+            // { 
+            //   return ((IStreamEncoder<T>)encoder).Encode(body, (T)value);
+            // }
+
+            var encoderParam = Expression.Parameter(typeof(object), "encoder");
+            var bodyParam = Expression.Parameter(typeof(Stream), "body");
+            var valueParam = Expression.Parameter(typeof(object), "value");
+
+            var encoderCast = Expression.Convert(encoderParam, encoderType);
+            var valueCast = Expression.Convert(valueParam, type);
+            var encode = encoderType.GetMethod("Encode", BindingFlags.Public | BindingFlags.Instance);
+            var encodeCall = Expression.Call(encoderCast, encode, bodyParam, valueCast);
+            var lambda = Expression.Lambda<Func<object, Stream, object, Task>>(encodeCall, encoderParam, bodyParam, valueParam);
+
+            var entry = new CacheEntry
             {
+                Encode = lambda.Compile(),
+                Encoder = _serviceProvider.GetService(encoderType)
+            };
 
-                // Func<object, object, Task> f = (encoder, body, value) =>
-                // { 
-                //   return ((IStreamEncoder<T>)encoder).Encode(body, (T)value);
-                // }
+            return entry;
+        }
 
-                var encoderParam = Expression.Parameter(typeof(object), "encoder");
-                var bodyParam = Expression.Parameter(typeof(Stream), "body");
-                var valueParam = Expression.Parameter(typeof(object), "value");
-
-                var encoderCast = Expression.Convert(encoderParam, encoderType);
-                var valueCast = Expression.Convert(valueParam, type);
-                var encode = encoderType.GetMethod("Encode", BindingFlags.Public | BindingFlags.Instance);
-                var encodeCall = Expression.Call(encoderCast, encode, bodyParam, valueCast);
-
-                return Expression.Lambda<Func<object, Stream, object, Task>>(encodeCall, encoderParam, bodyParam, valueParam).Compile();
-            });
-
-            object encoder = _sp.GetService(encoderType);
-            if (encoder != null)
-            {
-                return func(encoder, stream, value);
-            }
-            return Task.FromResult(0);
+        private struct CacheEntry
+        {
+            public Func<object, Stream, object, Task> Encode;
+            public object Encoder;
         }
     }
 }

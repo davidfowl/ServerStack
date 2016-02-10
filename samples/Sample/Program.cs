@@ -48,7 +48,7 @@ namespace Sample
         }
     }
 
-    public class NewLineMessage
+    public struct NewLineMessage
     {
         public string Line { get; set; }
     }
@@ -84,7 +84,7 @@ namespace Sample
 
             if (string.IsNullOrEmpty(line))
             {
-                return null;
+                return default(NewLineMessage);
             }
             return new NewLineMessage
             {
