@@ -3,12 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
-using Microsoft.Extensions.DependencyInjection;
+using JsonRPC;
 using Microsoft.Extensions.PlatformAbstractions;
 using Newtonsoft.Json.Linq;
 using ServerStack.Protocols;
+using ServerStack.Serialization;
 
-namespace JsonRPC
+namespace Microsoft.Extensions.DependencyInjection
 {
     public static class JsonRPCServiceCollectionExtensions
     {
@@ -32,8 +33,7 @@ namespace JsonRPC
                 }
             }
 
-            services.AddSingleton<IStreamDecoder<JObject>, JsonDecoder>();
-            services.AddSingleton<IStreamEncoder<JObject>, JsonEncoder>();
+            services.AddJsonEncoders();
             services.AddSingleton<IFrameHandler<JObject>, JsonRPCHandler>();
             return services;
         }

@@ -7,14 +7,15 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading.Tasks;
 
-namespace ServerStack.Protocols
+
+namespace ServerStack.Serialization
 {
-    public class StreamEncoder : IStreamEncoder
+    public class FrameOutput : IFrameOutput
     {
         private readonly IServiceProvider _sp;
         private readonly ConcurrentDictionary<Type, Func<object, Stream, object, Task>> _cache = new ConcurrentDictionary<Type, Func<object, Stream, object, Task>>();
 
-        public StreamEncoder(IServiceProvider sp)
+        public FrameOutput(IServiceProvider sp)
         {
             _sp = sp;
         }

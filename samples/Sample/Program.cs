@@ -1,19 +1,14 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.IO;
-using System.Linq.Expressions;
-using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using JsonRPC;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using ServerStack;
 using ServerStack.Middleware;
-using ServerStack.Protocols;
 using ServerStack.Protocols.Tcp;
+using ServerStack.Serialization;
 using ServerStack.Servers;
 
 namespace Sample
@@ -36,9 +31,11 @@ namespace Sample
     {
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddSingleton<IStreamEncoder, StreamEncoder>();
+            services.AddJsonEncoders();
 
-            services.AddJsonRPC();
+            services.AddSingleton(typeof(IStreamEncoder<NewLineMessage>), typeof(NewLineEncoder));
+            services.AddSingleton(typeof(IStreamDecoder<NewLineMessage>), typeof(NewLineDecoder));
+            services.AddSingleton(typeof(IFrameHandler<NewLineMessage>), typeof(NewLineHandler));
         }
 
         public void Configure(IApplicationBuilder<TcpContext> app, ILoggerFactory loggerFactory)
@@ -47,7 +44,52 @@ namespace Sample
 
             app.UseLogging();
 
-            app.UseFraming<JObject>();
+            app.UseDispatcher<NewLineMessage>();
+        }
+    }
+
+    public class NewLineMessage
+    {
+        public string Line { get; set; }
+    }
+
+    public class NewLineHandler : IFrameHandler<NewLineMessage>
+    {
+        public Task<object> OnFrame(NewLineMessage value)
+        {
+            var result = new JObject();
+
+            result["message"] = value.Line;
+
+            return Task.FromResult<object>(result);
+        }
+    }
+
+    public class NewLineEncoder : IStreamEncoder<NewLineMessage>
+    {
+        public Task Encode(Stream output, NewLineMessage value)
+        {
+            var bytes = Encoding.UTF8.GetBytes(value.Line + Environment.NewLine);
+
+            return output.WriteAsync(bytes, 0, bytes.Length);
+        }
+    }
+
+    public class NewLineDecoder : IStreamDecoder<NewLineMessage>
+    {
+        public async Task<NewLineMessage> Decode(Stream input)
+        {
+            var sr = new StreamReader(input);
+            var line = await sr.ReadLineAsync();
+
+            if (string.IsNullOrEmpty(line))
+            {
+                return null;
+            }
+            return new NewLineMessage
+            {
+                Line = line
+            };
         }
     }
 }

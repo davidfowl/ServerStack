@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using ServerStack.Protocols.Http;
 using ServerStack.Protocols.Tcp;
+using ServerStack.Serialization;
 
 namespace ServerStack
 {
@@ -27,6 +28,8 @@ namespace ServerStack
             services.AddLogging();
             services.AddOptions();
             services.AddSingleton<IApplicationLifetime, ApplicationLifetime>();
+
+            services.AddSingleton<IFrameOutput, FrameOutput>();
 
             // Add known protocols
             services.AddSingleton(typeof(IContextFactory<HttpContext>), typeof(HttpContextFactory));
