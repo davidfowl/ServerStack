@@ -8,7 +8,7 @@ using Newtonsoft.Json.Linq;
 
 namespace ServerStack.Serialization.Json
 {
-    public class JsonDecoder : IStreamDecoder<JObject>
+    public class JsonDecoder : IFrameDecoder<JObject>
     {
         public Task<JObject> Decode(Stream input)
         {

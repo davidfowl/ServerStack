@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ServerStack.Serialization
 {
-    public interface IStreamEncoder<TOutput>
+    public interface IFrameEncoder<TOutput>
     {
         Task Encode(Stream output, TOutput value);
     }

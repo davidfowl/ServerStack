@@ -33,8 +33,8 @@ namespace Sample
         {
             services.AddJsonEncoders();
 
-            services.AddSingleton(typeof(IStreamEncoder<NewLineMessage>), typeof(NewLineEncoder));
-            services.AddSingleton(typeof(IStreamDecoder<NewLineMessage>), typeof(NewLineDecoder));
+            services.AddSingleton(typeof(IFrameEncoder<NewLineMessage>), typeof(NewLineEncoder));
+            services.AddSingleton(typeof(IFrameDecoder<NewLineMessage>), typeof(NewLineDecoder));
             services.AddSingleton(typeof(IFrameHandler<NewLineMessage>), typeof(NewLineHandler));
         }
 
@@ -65,7 +65,7 @@ namespace Sample
         }
     }
 
-    public class NewLineEncoder : IStreamEncoder<NewLineMessage>
+    public class NewLineEncoder : IFrameEncoder<NewLineMessage>
     {
         public Task Encode(Stream output, NewLineMessage value)
         {
@@ -75,7 +75,7 @@ namespace Sample
         }
     }
 
-    public class NewLineDecoder : IStreamDecoder<NewLineMessage>
+    public class NewLineDecoder : IFrameDecoder<NewLineMessage>
     {
         public async Task<NewLineMessage> Decode(Stream input)
         {

@@ -33,7 +33,7 @@ namespace ServerStack.Serialization
 
         private CacheEntry CreateCacheEntry(Type type)
         {
-            var encoderType = typeof(IStreamEncoder<>).MakeGenericType(type);
+            var encoderType = typeof(IFrameEncoder<>).MakeGenericType(type);
 
             // Func<object, Stream, object, Task> callback = (encoder, body, value) =>
             // { 

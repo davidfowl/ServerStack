@@ -8,7 +8,7 @@ using Newtonsoft.Json.Linq;
 
 namespace ServerStack.Serialization.Json
 {
-    public class JsonEncoder : IStreamEncoder<JObject>
+    public class JsonEncoder : IFrameEncoder<JObject>
     {
         public Task Encode(Stream output, JObject value)
         {

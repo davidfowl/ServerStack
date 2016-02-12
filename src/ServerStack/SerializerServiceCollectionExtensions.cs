@@ -12,8 +12,8 @@ namespace Microsoft.Extensions.DependencyInjection
     {
         public static IServiceCollection AddJsonEncoders(this IServiceCollection services)
         {
-            services.AddSingleton<IStreamDecoder<JObject>, JsonDecoder>();
-            services.AddSingleton<IStreamEncoder<JObject>, JsonEncoder>();
+            services.AddSingleton<IFrameDecoder<JObject>, JsonDecoder>();
+            services.AddSingleton<IFrameEncoder<JObject>, JsonEncoder>();
             return services;
         }
     }

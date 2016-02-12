@@ -30,6 +30,7 @@ namespace ServerStack
             services.AddSingleton<IApplicationLifetime, ApplicationLifetime>();
 
             services.AddSingleton<IFrameOutput, FrameOutput>();
+            services.AddSingleton(typeof(Dispatcher<>));
 
             // Add known protocols
             services.AddSingleton(typeof(IContextFactory<HttpContext>), typeof(HttpContextFactory));

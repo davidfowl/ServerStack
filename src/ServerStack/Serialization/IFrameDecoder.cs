@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ServerStack.Serialization
 {
-    public interface IStreamDecoder<TInput>
+    public interface IFrameDecoder<TInput>
     {
         Task<TInput> Decode(Stream input);
     }
