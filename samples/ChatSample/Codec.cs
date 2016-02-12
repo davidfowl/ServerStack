@@ -29,7 +29,7 @@ namespace ChatSample
     {
         public Task Encode(Stream output, ChatMessage value)
         {
-            var buffer = Encoding.UTF8.GetBytes(value.Message);
+            var buffer = Encoding.UTF8.GetBytes(value.Message + Environment.NewLine);
 
             return output.WriteAsync(buffer, 0, buffer.Length);
         }
