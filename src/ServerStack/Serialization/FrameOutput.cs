@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading.Tasks;
-
+using Microsoft.Extensions.DependencyInjection;
 
 namespace ServerStack.Serialization
 {
@@ -53,7 +53,7 @@ namespace ServerStack.Serialization
             var entry = new CacheEntry
             {
                 Encode = lambda.Compile(),
-                Encoder = _serviceProvider.GetService(encoderType)
+                Encoder = _serviceProvider.GetRequiredService(encoderType)
             };
 
             return entry;

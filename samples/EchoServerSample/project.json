@@ -1,0 +1,20 @@
+﻿{
+  "version": "1.0.0-*",
+
+  "compilationOptions": {
+    "emitEntryPoint": true
+  },
+
+  "dependencies": {
+    "ServerStack": { "target": "project" },
+    "Microsoft.Extensions.Logging.Console": "1.0.0-rc1-final"
+  },
+
+  "commands": {
+    "EchoServerSample": "EchoServerSample"
+  },
+
+  "frameworks": {
+    "dnx451": { }
+  }
+}

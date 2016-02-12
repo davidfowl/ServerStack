@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
+using ServerStack.Dispatch;
 using ServerStack.Protocols.Tcp;
 
 namespace ServerStack.Middleware
@@ -17,9 +18,10 @@ namespace ServerStack.Middleware
             _dispatcher = dispatcher;
         }
 
-        public Task Invoke(TcpContext context)
+        public async Task Invoke(TcpContext context)
         {
-            return _dispatcher.Invoke(context.Body);
+            await _dispatcher.Invoke(context.Body);
+            await _next(context);
         }
     }
 

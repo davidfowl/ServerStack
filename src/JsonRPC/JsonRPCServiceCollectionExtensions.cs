@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using JsonRPC;
 using Microsoft.Extensions.PlatformAbstractions;
 using Newtonsoft.Json.Linq;
+using ServerStack.Dispatch;
 using ServerStack.Protocols;
 using ServerStack.Serialization;
 
@@ -33,7 +34,6 @@ namespace Microsoft.Extensions.DependencyInjection
                 }
             }
 
-            services.AddJsonEncoders();
             services.AddSingleton<IFrameHandler<JObject>, JsonRPCHandler>();
             return services;
         }

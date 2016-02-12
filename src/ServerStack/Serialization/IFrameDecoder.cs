@@ -8,6 +8,6 @@ namespace ServerStack.Serialization
 {
     public interface IFrameDecoder<TInput>
     {
-        Task<TInput> Decode(Stream input);
+        Task Decode(Stream input, List<TInput> results);
     }
 }

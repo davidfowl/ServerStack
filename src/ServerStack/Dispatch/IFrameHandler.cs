@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace ServerStack.Serialization
+namespace ServerStack.Dispatch
 {
     public interface IFrameHandler<TInput>
     {
-        Task<object> OnFrame(TInput value);
+        Task OnFrame(Stream output, TInput value);
     }
 }

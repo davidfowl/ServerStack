@@ -1,15 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using ServerStack.Protocols.Http;
+using Newtonsoft.Json.Linq;
+using ServerStack.Dispatch;
 using ServerStack.Protocols.Tcp;
 using ServerStack.Serialization;
+using ServerStack.Serialization.Json;
 
 namespace ServerStack
 {
@@ -32,8 +35,10 @@ namespace ServerStack
             services.AddSingleton<IFrameOutput, FrameOutput>();
             services.AddSingleton(typeof(Dispatcher<>));
 
+            // known encoders
+            services.AddCodec<JObject, JsonEncoder, JsonDecoder>();
+
             // Add known protocols
-            services.AddSingleton(typeof(IContextFactory<HttpContext>), typeof(HttpContextFactory));
             services.AddSingleton(typeof(IContextFactory<TcpContext>), typeof(TcpContextFactory));
 
             // Add the startup type
@@ -68,7 +73,7 @@ namespace ServerStack
 
             for (int i = 1; i < parameters.Length; i++)
             {
-                args[i] = serviceProvider.GetRequiredService(parameters[i].ParameterType);
+                args[i] = applicationServices.GetRequiredService(parameters[i].ParameterType);
             }
 
             configure.Invoke(startup, args);

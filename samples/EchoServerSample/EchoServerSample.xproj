@@ -7,8 +7,8 @@
 
   <Import Project="$(VSToolsPath)\DNX\Microsoft.DNX.Props" Condition="'$(VSToolsPath)' != ''" />
   <PropertyGroup Label="Globals">
-    <ProjectGuid>1f58523d-11de-42c5-9e64-5edfc54e99d4</ProjectGuid>
-    <RootNamespace>Sample</RootNamespace>
+    <ProjectGuid>d2d2a34d-6f23-4f71-aa5e-4050f6ed503f</ProjectGuid>
+    <RootNamespace>EchoServerSample</RootNamespace>
     <BaseIntermediateOutputPath Condition="'$(BaseIntermediateOutputPath)'=='' ">..\..\artifacts\obj\$(MSBuildProjectName)</BaseIntermediateOutputPath>
     <OutputPath Condition="'$(OutputPath)'=='' ">..\..\artifacts\bin\$(MSBuildProjectName)\</OutputPath>
   </PropertyGroup>

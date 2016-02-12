@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using ServerStack.Features;
 
 namespace ServerStack.Servers
@@ -13,10 +14,12 @@ namespace ServerStack.Servers
         public IFeatureCollection Features { get; }
 
         private readonly TcpListener _listener;
+        private readonly ILogger _logger;
 
-        public TcpServer(IPEndPoint endPoint)
+        public TcpServer(IPEndPoint endPoint, ILoggerFactory loggerFactory)
         {
             _listener = new TcpListener(endPoint);
+            _logger = loggerFactory.CreateLogger<TcpServer>();
         }
 
         public void Dispose()
@@ -38,18 +41,27 @@ namespace ServerStack.Servers
                     Body = client.GetStream()
                 });
 
-                var context = application.CreateContext(fc);
+                _logger.LogVerbose("Accepted connection {connection}", client.Client.RemoteEndPoint);
 
-                try
+                var ignore = Task.Run(async () =>
                 {
-                    await application.ProcessRequestAsync(context);
+                    var context = application.CreateContext(fc);
 
-                    application.DisposeContext(context, null);
-                }
-                catch (Exception ex)
-                {
-                    application.DisposeContext(context, ex);
-                }
+                    try
+                    {
+                        await application.ProcessRequestAsync(context);
+
+                        application.DisposeContext(context, null);
+                    }
+                    catch (Exception ex)
+                    {
+                        application.DisposeContext(context, ex);
+                    }
+                    finally
+                    {
+                        _logger.LogVerbose("Connection {connection} closed", client.Client.RemoteEndPoint);
+                    }
+                });
             }
         }
     }

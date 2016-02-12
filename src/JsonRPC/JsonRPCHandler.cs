@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
+using ServerStack.Dispatch;
 using ServerStack.Serialization;
 
 namespace JsonRPC
@@ -17,12 +19,15 @@ namespace JsonRPC
         private readonly ILogger<JsonRPCHandler> _logger;
 
         private bool _isBound;
+        private readonly IFrameOutput _output;
 
         public JsonRPCHandler(ILogger<JsonRPCHandler> logger, 
                               IEnumerable<RpcEndpoint> endpoints, 
+                              IFrameOutput output,
                               IServiceProvider serviceProvider)
         {
             _logger = logger;
+            _output = output;
             _serviceProvider = serviceProvider;
 
             foreach (var endpoint in endpoints)
@@ -31,7 +36,7 @@ namespace JsonRPC
             }
         }
 
-        public Task<object> OnFrame(JObject request)
+        public Task OnFrame(Stream output, JObject request)
         {
             if (_logger.IsEnabled(LogLevel.Verbose))
             {
@@ -53,7 +58,7 @@ namespace JsonRPC
             }
 
             _logger.LogVerbose("Sending JSON RPC response: {data}", response);
-            return Task.FromResult<object>(response);
+            return _output.WriteAsync(output, response);
         }
 
         private void Bind(Type type)
@@ -123,6 +128,5 @@ namespace JsonRPC
                 };
             };
         }
-
     }
 }
