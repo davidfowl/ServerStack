@@ -1,0 +1,20 @@
+﻿{
+  "version": "1.0.0-*",
+
+  "compilationOptions": {
+    "emitEntryPoint": true
+  },
+
+  "dependencies": {
+    "JsonRPC": { "target": "project" },
+    "Microsoft.Extensions.Logging.Console": "1.0.0-rc1-final"
+  },
+
+  "commands": {
+    "JsonRPCSample": "JsonRPCSample"
+  },
+
+  "frameworks": {
+    "dnx451": { }
+  }
+}

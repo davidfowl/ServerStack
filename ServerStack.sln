@@ -20,6 +20,8 @@ Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "EchoServerSample", "samples
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "ChatSample", "samples\ChatSample\ChatSample.xproj", "{95BD991A-7697-4227-8E3A-01D71A3AFE78}"
 EndProject
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "JsonRPCSample", "samples\JsonRPCSample\JsonRPCSample.xproj", "{31E7C8E3-CEB4-429F-900E-32A662AFD136}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -42,6 +44,10 @@ Global
 		{95BD991A-7697-4227-8E3A-01D71A3AFE78}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{95BD991A-7697-4227-8E3A-01D71A3AFE78}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{95BD991A-7697-4227-8E3A-01D71A3AFE78}.Release|Any CPU.Build.0 = Release|Any CPU
+		{31E7C8E3-CEB4-429F-900E-32A662AFD136}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{31E7C8E3-CEB4-429F-900E-32A662AFD136}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{31E7C8E3-CEB4-429F-900E-32A662AFD136}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{31E7C8E3-CEB4-429F-900E-32A662AFD136}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -51,5 +57,6 @@ Global
 		{B27DF9CA-F1FB-441A-9FC2-EF91880E636F} = {54FEBF83-53F8-4447-9E81-E5C3136CFA3D}
 		{D2D2A34D-6F23-4F71-AA5E-4050F6ED503F} = {60F90A10-557C-4A63-AFC5-A8DF156FEDFB}
 		{95BD991A-7697-4227-8E3A-01D71A3AFE78} = {60F90A10-557C-4A63-AFC5-A8DF156FEDFB}
+		{31E7C8E3-CEB4-429F-900E-32A662AFD136} = {60F90A10-557C-4A63-AFC5-A8DF156FEDFB}
 	EndGlobalSection
 EndGlobal

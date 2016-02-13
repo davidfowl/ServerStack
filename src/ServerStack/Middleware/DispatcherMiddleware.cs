@@ -4,7 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using ServerStack.Dispatch;
 using ServerStack.Protocols.Tcp;
 
-namespace ServerStack.Middleware
+namespace ServerStack
 {
     public class DispatcherMiddleware<T>
     {
