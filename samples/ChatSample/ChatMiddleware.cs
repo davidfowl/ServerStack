@@ -14,8 +14,8 @@ namespace ChatSample
         private readonly IObservable<Frame<ChatMessage>> _observable;
 
 
-        public ChatMiddleware(Func<TcpContext, Task> next, 
-                              IOutputProducerFactory producerFactory, 
+        public ChatMiddleware(Func<TcpContext, Task> next,
+                              IOutputProducerFactory producerFactory,
                               IObservable<Frame<ChatMessage>> observable)
         {
             _next = next;
@@ -27,9 +27,16 @@ namespace ChatSample
         {
             var producer = _producerFactory.Create(context.Body);
 
-            using (_observable.Subscribe(new ChatClient(producer)))
+            try
             {
-                await _next(context);
+                using (_observable.Subscribe(new ChatClient(producer)))
+                {
+                    await _next(context);
+                }
+            }
+            finally
+            {
+                (producer as IDisposable)?.Dispose();
             }
         }
 
@@ -44,7 +51,7 @@ namespace ChatSample
 
             public void OnCompleted()
             {
-                (_output as IDisposable)?.Dispose();
+
             }
 
             public void OnError(Exception error)
