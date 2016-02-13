@@ -1,13 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using System.Threading.Tasks;
 using JsonRPC;
 using Microsoft.Extensions.PlatformAbstractions;
 using Newtonsoft.Json.Linq;
-using ServerStack.Dispatch;
-using ServerStack.Protocols;
 using ServerStack.Serialization;
 
 namespace Microsoft.Extensions.DependencyInjection
@@ -34,7 +29,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 }
             }
 
-            services.AddSingleton<IFrameHandler<JObject>, JsonRPCHandler>();
+            services.AddSingleton<IObserver<Frame<JObject>>, JsonRPCHandler>();
             return services;
         }
     }

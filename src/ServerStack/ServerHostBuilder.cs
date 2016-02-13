@@ -33,7 +33,7 @@ namespace ServerStack
             services.AddSingleton<IApplicationLifetime, ApplicationLifetime>();
 
             services.AddSingleton<IFrameOutput, FrameOutput>();
-            services.AddSingleton(typeof(Dispatcher<>));
+            services.AddSingleton<IOutputProducerFactory, DefaultOutputProducerFactory>();
 
             // known encoders
             services.AddCodec<JObject, JsonEncoder, JsonDecoder>();

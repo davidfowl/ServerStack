@@ -5,6 +5,7 @@ using ServerStack;
 using ServerStack.Dispatch;
 using ServerStack.Middleware;
 using ServerStack.Protocols.Tcp;
+using ServerStack.Serialization;
 
 namespace ChatSample
 {
@@ -14,9 +15,7 @@ namespace ChatSample
         {
             services.AddCodec<ChatMessage, ChatMessageEncoder, ChatMessageDecoder>();
 
-            services.AddSingleton<ChatMessageHandler>();
-            services.AddSingleton(typeof(IFrameHandler<ChatMessage>), sp => sp.GetService<ChatMessageHandler>());
-            services.AddSingleton(typeof(IObservable<ChatMessage>), sp => sp.GetService<ChatMessageHandler>());
+            services.AddDispatcher<ChatMessage>();
         }
 
         public void Configure(IApplicationBuilder<TcpContext> app, ILoggerFactory loggerFactory)

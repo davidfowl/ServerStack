@@ -4,10 +4,11 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace ServerStack.Dispatch
+namespace ServerStack.Serialization
 {
-    public interface IFrameHandler<TInput>
+
+    public interface IOutputProducerFactory
     {
-        Task OnFrame(Stream output, TInput value);
+        IOutputProducer Create(Stream stream);
     }
 }

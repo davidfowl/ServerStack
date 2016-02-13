@@ -1,31 +1,39 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using ServerStack.Dispatch;
 using ServerStack.Serialization;
 
 namespace ServerStack.Dispatch
 {
-    public class Dispatcher<T>
+    public class Dispatcher<T> : IObservable<Frame<T>>
     {
         private readonly IFrameDecoder<T> _decoder;
-        private readonly IFrameHandler<T> _frameHandler;
+        private readonly List<IObserver<Frame<T>>> _observers = new List<IObserver<Frame<T>>>();
         private readonly ILogger<Dispatcher<T>> _logger;
+        private readonly IOutputProducerFactory _producerFactory;
 
         public Dispatcher(ILogger<Dispatcher<T>> logger,
                           IFrameDecoder<T> decoder,
-                          IFrameHandler<T> frameHandler)
+                          IOutputProducerFactory producerFactory,
+                          IEnumerable<IObserver<Frame<T>>> observers)
         {
             _logger = logger;
             _decoder = decoder;
-            _frameHandler = frameHandler;
+            _producerFactory = producerFactory;
+
+            foreach (var observer in observers)
+            {
+                Subscribe(observer);
+            }
         }
 
         public async Task Invoke(Stream stream)
         {
+            var producer = _producerFactory.Create(stream);
+
             while (true)
             {
                 try
@@ -39,16 +47,69 @@ namespace ServerStack.Dispatch
                         break;
                     }
 
-                    foreach (var frame in frames)
+                    lock (_observers)
                     {
-                        await _frameHandler.OnFrame(stream, frame);
+                        foreach (var observer in _observers)
+                        {
+                            foreach (var frame in frames)
+                            {
+                                observer.OnNext(new Frame<T>(producer, frame));
+                            }
+                        }
                     }
                 }
                 catch (Exception ex)
                 {
+                    lock (_observers)
+                    {
+                        foreach (var observer in _observers)
+                        {
+                            observer.OnError(ex);
+                        }
+                    }
+
                     _logger.LogError("Failed to process frame", ex);
                     break;
                 }
+            }
+
+            (producer as IDisposable)?.Dispose();
+
+            lock (_observers)
+            {
+                foreach (var observer in _observers)
+                {
+                    observer.OnCompleted();
+                }
+            }
+        }
+
+        public IDisposable Subscribe(IObserver<Frame<T>> observer)
+        {
+            lock (_observers)
+            {
+                _observers.Add(observer);
+            }
+
+            return new DisposableAction(() =>
+            {
+                lock (_observers)
+                {
+                    _observers.Remove(observer);
+                }
+            });
+        }
+
+        private class DisposableAction : IDisposable
+        {
+            private Action _action;
+            public DisposableAction(Action action)
+            {
+                _action = action;
+            }
+            public void Dispose()
+            {
+                Interlocked.Exchange(ref _action, () => { }).Invoke();
             }
         }
     }

@@ -10,39 +10,41 @@ namespace ChatSample
     public class ChatMiddleware
     {
         private readonly Func<TcpContext, Task> _next;
-        private readonly IFrameOutput _output;
-        private readonly IObservable<ChatMessage> _observable;
+        private readonly IOutputProducerFactory _producerFactory;
+        private readonly IObservable<Frame<ChatMessage>> _observable;
 
 
-        public ChatMiddleware(Func<TcpContext, Task> next, IFrameOutput output, IObservable<ChatMessage> observable)
+        public ChatMiddleware(Func<TcpContext, Task> next, 
+                              IOutputProducerFactory producerFactory, 
+                              IObservable<Frame<ChatMessage>> observable)
         {
             _next = next;
-            _output = output;
+            _producerFactory = producerFactory;
             _observable = observable;
         }
 
         public async Task Invoke(TcpContext context)
         {
-            using (_observable.Subscribe(new ChatClient(context, _output)))
+            var producer = _producerFactory.Create(context.Body);
+
+            using (_observable.Subscribe(new ChatClient(producer)))
             {
                 await _next(context);
             }
         }
 
-        private class ChatClient : IObserver<ChatMessage>
+        private class ChatClient : IObserver<Frame<ChatMessage>>
         {
-            private readonly TcpContext _context;
-            private readonly IFrameOutput _output;
+            private readonly IOutputProducer _output;
 
-            public ChatClient(TcpContext context, IFrameOutput output)
+            public ChatClient(IOutputProducer output)
             {
-                _context = context;
                 _output = output;
             }
 
             public void OnCompleted()
             {
-
+                (_output as IDisposable)?.Dispose();
             }
 
             public void OnError(Exception error)
@@ -50,9 +52,9 @@ namespace ChatSample
 
             }
 
-            public void OnNext(ChatMessage value)
+            public void OnNext(Frame<ChatMessage> value)
             {
-                _output.WriteAsync(_context.Body, value);
+                _output.Produce(value.Data);
             }
         }
     }
@@ -61,8 +63,8 @@ namespace ChatSample
     {
         public static IApplicationBuilder<TcpContext> UseChat(this IApplicationBuilder<TcpContext> app)
         {
-            var output = app.ApplicationServices.GetRequiredService<IFrameOutput>();
-            var observable = app.ApplicationServices.GetRequiredService<IObservable<ChatMessage>>();
+            var output = app.ApplicationServices.GetRequiredService<IOutputProducerFactory>();
+            var observable = app.ApplicationServices.GetRequiredService<IObservable<Frame<ChatMessage>>>();
 
             return app.Use(next => new ChatMiddleware(next, output, observable).Invoke);
         }
