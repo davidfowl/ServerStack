@@ -34,6 +34,7 @@ namespace ServerStack
 
             services.AddSingleton<IFrameOutput, FrameOutput>();
             services.AddSingleton<IOutputProducerFactory, DefaultOutputProducerFactory>();
+            services.AddSingleton(typeof(IDispatcher<>), typeof(Dispatcher<>));
 
             // known encoders
             services.AddCodec<JObject, JsonEncoder, JsonDecoder>();

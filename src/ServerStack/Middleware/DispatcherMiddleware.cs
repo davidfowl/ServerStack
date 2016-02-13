@@ -9,10 +9,10 @@ namespace ServerStack
     public class DispatcherMiddleware<T>
     {
         private readonly Func<TcpContext, Task> _next;
-        private readonly Dispatcher<T> _dispatcher;
+        private readonly IDispatcher<T> _dispatcher;
 
         public DispatcherMiddleware(Func<TcpContext, Task> next,
-                                    Dispatcher<T> dispatcher)
+                                    IDispatcher<T> dispatcher)
         {
             _next = next;
             _dispatcher = dispatcher;
@@ -31,7 +31,7 @@ namespace ServerStack
         {
             return app.Use(next =>
             {
-                var dispatcher = app.ApplicationServices.GetRequiredService<Dispatcher<T>>();
+                var dispatcher = app.ApplicationServices.GetRequiredService<IDispatcher<T>>();
 
                 return new DispatcherMiddleware<T>(next, dispatcher).Invoke;
             });

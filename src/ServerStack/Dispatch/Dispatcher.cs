@@ -8,26 +8,25 @@ using ServerStack.Serialization;
 
 namespace ServerStack.Dispatch
 {
-    public class Dispatcher<T> : IObservable<Frame<T>>
+    public class Dispatcher<T> : IDispatcher<T>
     {
         private readonly IFrameDecoder<T> _decoder;
-        private readonly List<IObserver<Frame<T>>> _observers = new List<IObserver<Frame<T>>>();
         private readonly ILogger<Dispatcher<T>> _logger;
         private readonly IOutputProducerFactory _producerFactory;
 
+        public event Action<IOutputProducer, T> Callback;
+
+        public event Action<Exception> OnError;
+
+        public event Action OnCompleted;
+
         public Dispatcher(ILogger<Dispatcher<T>> logger,
                           IFrameDecoder<T> decoder,
-                          IOutputProducerFactory producerFactory,
-                          IEnumerable<IObserver<Frame<T>>> observers)
+                          IOutputProducerFactory producerFactory)
         {
             _logger = logger;
             _decoder = decoder;
             _producerFactory = producerFactory;
-
-            foreach (var observer in observers)
-            {
-                Subscribe(observer);
-            }
         }
 
         public async Task Invoke(Stream stream)
@@ -47,70 +46,23 @@ namespace ServerStack.Dispatch
                         break;
                     }
 
-                    lock (_observers)
+                    foreach (var frame in frames)
                     {
-                        foreach (var observer in _observers)
-                        {
-                            foreach (var frame in frames)
-                            {
-                                observer.OnNext(new Frame<T>(producer, frame));
-                            }
-                        }
+                        Callback(producer, frame);
                     }
                 }
                 catch (Exception ex)
                 {
-                    lock (_observers)
-                    {
-                        foreach (var observer in _observers)
-                        {
-                            observer.OnError(ex);
-                        }
-                    }
+                    OnError(ex);
 
                     _logger.LogError("Failed to process frame", ex);
                     break;
                 }
             }
 
+            OnCompleted();
+
             (producer as IDisposable)?.Dispose();
-
-            lock (_observers)
-            {
-                foreach (var observer in _observers)
-                {
-                    observer.OnCompleted();
-                }
-            }
-        }
-
-        public IDisposable Subscribe(IObserver<Frame<T>> observer)
-        {
-            lock (_observers)
-            {
-                _observers.Add(observer);
-            }
-
-            return new DisposableAction(() =>
-            {
-                lock (_observers)
-                {
-                    _observers.Remove(observer);
-                }
-            });
-        }
-
-        private class DisposableAction : IDisposable
-        {
-            private Action _action;
-            public DisposableAction(Action action)
-            {
-                _action = action;
-            }
-            public void Dispose()
-            {
-                Interlocked.Exchange(ref _action, () => { }).Invoke();
-            }
         }
     }
 }
