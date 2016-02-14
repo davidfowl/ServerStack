@@ -15,7 +15,7 @@ namespace ChatSample
         {
             services.AddCodec<ChatMessage, ChatMessageEncoder, ChatMessageDecoder>();
 
-            services.AddDispatcher<ChatMessage>();
+            services.AddObservableDispatcher<ChatMessage>();
         }
 
         public void Configure(IApplicationBuilder<TcpContext> app, ILoggerFactory loggerFactory)

@@ -30,7 +30,7 @@ namespace Microsoft.Extensions.DependencyInjection
             }
 
             services.AddSingleton<IObserver<Frame<JObject>>, JsonRPCHandler>();
-            services.AddDispatcher<JObject>();
+            services.AddObservableDispatcher<JObject>();
             return services;
         }
     }
